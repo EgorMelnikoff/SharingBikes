@@ -13,12 +13,13 @@ public class Mapper : IMapper
         Status = vehicle.Status
     };
 
-    public UserResponse Map(User user) => new()
+    public UserResponse Map(User user, Ride? ride) => new()
     {
         Id = user.Id,
         FullName = user.FullName,
         Email = user.Email,
-        Phone = user.Phone
+        Phone = user.Phone,
+        Ride = ride is not null ? Map(ride) : null,
     };
 
     public RideResponse Map(Ride ride) => new()

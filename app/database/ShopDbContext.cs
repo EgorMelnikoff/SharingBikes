@@ -31,7 +31,7 @@ public class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbContext(
         modelBuilder.Entity<Ride>(entity =>
         {
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.TotalCost).HasPrecision(18, 2);
+            entity.Property(x => x.TotalCost).HasPrecision(10, 2);
             
             entity.HasOne<User>()
                 .WithMany()

@@ -14,19 +14,23 @@ public static class UserEndpoints
         group.MapGet("/", async (IUserService users, IMapper mapper) =>
             {
                 var result = await users.GetAll();
-                return Results.Ok(result.Select(mapper.Map));
+                return Results.Ok(result.Select( it => mapper.Map(it, null)));
             })
             .WithSummary("Получить список юзеров")
             .WithDescription("Возвращает всех зарегистрированных юзеров")
             .Produces<IEnumerable<UserResponse>>(StatusCodes.Status200OK);
 
         group.MapGet("/{userId:guid}",
-                async (Guid userId, IUserService users, IMapper mapper) =>
+                async (Guid userId, IUserService users, IRideService rides, IMapper mapper) =>
             {
                 var user = await users.GetUserById(userId);
-                return user is null
-                    ? Results.NotFound(new ErrorResponse { Message = "Юзер не найден." })
-                    : Results.Ok(mapper.Map(user));
+                if (user is null)
+                {
+                    return Results.NotFound(new ErrorResponse { Message = "Юзер не найден." });
+                }
+                
+                var currentRide = await rides.GetRideById(userId);
+                return Results.Ok(mapper.Map(user, currentRide));
             })
             .WithSummary("Получить юзера")
             .Produces<UserResponse>(StatusCodes.Status200OK)
@@ -37,7 +41,7 @@ public static class UserEndpoints
                 try
                 {
                     var created = await users.CreateUser(body);
-                    return Results.Created($"/api/users/{created.Id}", mapper.Map(created));
+                    return Results.Created($"/api/users/{created.Id}", mapper.Map(created, null));
                 }
                 catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
                 {

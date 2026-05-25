@@ -7,7 +7,7 @@ public interface IMapper
 {
     VehicleResponse Map(Vehicle vehicle);
     
-    UserResponse Map(User user);
+    UserResponse Map(User user, Ride? ride);
     
     RideResponse Map(Ride ride);
 }

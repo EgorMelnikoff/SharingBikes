@@ -30,9 +30,26 @@ public class RideService(ShopDbContext db, IVehicleService vehicleService) : IRi
         ride.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
         return ride;
     }
+    
+    public async Task<Ride?> GetRideByUserId(Guid userId)
+    {
+        Ride? ride = await db.Rides
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.EndTime == null);
+        
+        ride?.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
+        return ride;
+    }
 
     public async Task<StartRideResponse> StartRide(StartRideRequest request)
     {
+        Ride? ride = await GetRideByUserId(request.UserId);
+        
+        if (ride is not null)
+        {
+            throw new InvalidOperationException($"Невозможно начать новую поездку без завершения старой.");
+        }
+        
         Vehicle? vehicle = await vehicleService.GetVehicleById(request.VehicleId);
 
         if (vehicle is null)
@@ -44,6 +61,7 @@ public class RideService(ShopDbContext db, IVehicleService vehicleService) : IRi
         {
             throw new InvalidOperationException($"Самокат недоступен.");
         }
+        
 
         var id = Guid.NewGuid();
         var entity = new Ride(
