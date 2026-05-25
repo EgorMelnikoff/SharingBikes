@@ -50,7 +50,7 @@ public static class RideEndpoints
             .WithSummary("Начать поездку")
             .Produces<StartRideResponse>(StatusCodes.Status201Created)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest);
-
+        
         group.MapPost("/end", async (EndRideRequest body, IRideService rides, IMapper mapper) =>
             {
                 try
@@ -67,6 +67,28 @@ public static class RideEndpoints
             .Produces<RideResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
+        
+        group.MapDelete("/{rideId:guid}",
+                async (Guid rideId, IRideService rides) =>
+                {
+                    try
+                    {
+                        var deleted = await rides.DeleteRide(rideId);
+                        return deleted
+                            ? Results.NoContent()
+                            : Results.NotFound(new ErrorResponse { Message = "Поездка не найдена." });
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        return Results.BadRequest(new ErrorResponse { Message = ex.Message });
+                    }
+                })
+            .WithSummary("Удалить поездку")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
+
+        
         return api;
     }
 }

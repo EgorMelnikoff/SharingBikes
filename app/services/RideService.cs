@@ -100,6 +100,19 @@ public class RideService(SharingDbContext db, IVehicleService vehicleService) : 
         return ride;
     }
 
+    public async Task<bool> DeleteRide(Guid id)
+    {
+        var entity = await db.Rides.FirstOrDefaultAsync(x => x.Id == id);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        db.Rides.Remove(entity);
+        await db.SaveChangesAsync();
+        return true;
+    }
+    
     private decimal GetCurrentCost(DateTime start, DateTime? end)
     {
         double minutes = Math.Abs(end.HasValue
