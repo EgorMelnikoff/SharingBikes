@@ -31,4 +31,13 @@ public class Mapper : IMapper
         EndTime = ride.EndTime,
         TotalCost = ride.TotalCost
     };
+
+    public FineResponse Map(Fine fine) => new()
+    {
+        Id = fine.Id,
+        UserId = fine.UserId,
+        RideId = fine.RideId,
+        Amount = fine.Amount,
+        Reason = fine.Reason
+    };
 }

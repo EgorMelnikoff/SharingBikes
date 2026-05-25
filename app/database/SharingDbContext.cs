@@ -8,6 +8,7 @@ public class SharingDbContext(DbContextOptions<SharingDbContext> options) : DbCo
     public DbSet<User> Users { get; set; }
     public DbSet<Vehicle> Vehicles { get; set; }
     public DbSet<Ride> Rides { get; set; }
+    public DbSet<Fine> Fines { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,22 @@ public class SharingDbContext(DbContextOptions<SharingDbContext> options) : DbCo
                 entity.HasOne<Vehicle>()
                     .WithMany()
                     .HasForeignKey(x => x.VehicleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            }
+        );
+        
+        modelBuilder.Entity<Fine>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                
+                entity.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne<Ride>()
+                    .WithMany()
+                    .HasForeignKey(x => x.RideId)
                     .OnDelete(DeleteBehavior.Restrict);
             }
         );

@@ -26,6 +26,7 @@ builder.Services.AddDbContext<SharingDbContext>(options => { options.UseNpgsql(c
 
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFineService, FineService>();
 builder.Services.AddScoped<IRideService, RideService>();
 builder.Services.AddScoped<IMapper, Mapper>();
 
@@ -47,5 +48,6 @@ var api = app.MapGroup("/api");
 api.MapRidesEndpoints();
 api.MapVehiclesEndpoints();
 api.MapUsersEndpoints();
+api.MapFinesEndpoints();
 
 await app.RunAsync();

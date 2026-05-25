@@ -29,8 +29,7 @@ public static class RideEndpoints
                         : Results.Ok(mapper.Map(ride));
                 }
             )
-            .WithSummary("Получить бонусный баланс клиента")
-            .WithDescription("Возвращает количество накопленных бонусов по идентификатору клиента.")
+            .WithSummary("Получить поездку")
             .Produces<RideResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 

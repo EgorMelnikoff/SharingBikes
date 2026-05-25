@@ -8,7 +8,12 @@ using sharing_bikes.net.model;
 
 namespace sharing_bikes.net.services;
 
-public class RideService(SharingDbContext db, IVehicleService vehicleService) : IRideService
+public class RideService(
+    SharingDbContext db, 
+    IVehicleService vehicleService,
+    IFineService fineService
+    
+    ) : IRideService
 {
     private const decimal PricePerMinute = 9m;
     
@@ -55,6 +60,13 @@ public class RideService(SharingDbContext db, IVehicleService vehicleService) : 
         if (vehicle.Status != VehicleStatus.Available)
         {
             throw new InvalidOperationException($"Самокат недоступен.");
+        }
+
+        IReadOnlyList<Fine> fines = await fineService.GetActiveFineByUserId(request.UserId);
+
+        if (fines.Count != 0)
+        {
+            throw new InvalidOperationException($"Оплатите штрафы, чтобы начать аренду.");
         }
 
 

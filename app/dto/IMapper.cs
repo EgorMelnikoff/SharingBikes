@@ -10,4 +10,5 @@ public interface IMapper
     UserResponse Map(User user, Ride? ride);
     
     RideResponse Map(Ride ride);
+    FineResponse Map(Fine fine);
 }
