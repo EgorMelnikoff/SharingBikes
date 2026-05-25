@@ -18,7 +18,7 @@ public static class RideEndpoints
             })
             .WithSummary("Получить список поездок")
             .WithDescription("Возвращает всех поездок.")
-            .Produces<IEnumerable<RideResponse>>(StatusCodes.Status200OK);
+            .Produces<IEnumerable<RideResponse>>();
 
         group.MapGet("/{rideId:guid}",
                 async (Guid rideId, IRideService rides, IMapper mapper) =>
@@ -27,18 +27,19 @@ public static class RideEndpoints
                     return ride is null
                         ? Results.NotFound(new ErrorResponse { Message = "Клиент не найден." })
                         : Results.Ok(mapper.Map(ride));
-                })
+                }
+            )
             .WithSummary("Получить бонусный баланс клиента")
             .WithDescription("Возвращает количество накопленных бонусов по идентификатору клиента.")
-            .Produces<RideResponse>(StatusCodes.Status200OK)
+            .Produces<RideResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
-        group.MapPost("/start", async (StartRideRequest body, IRideService rides, IMapper mapper) =>
+        group.MapPost("/start", async (StartRideRequest body, IRideService rides) =>
             {
                 try
                 {
                     var created = await rides.StartRide(body);
-                    
+
                     return Results.Created($"/api/rides/{created.Id}", created);
                 }
                 catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
@@ -63,7 +64,7 @@ public static class RideEndpoints
                 }
             })
             .WithSummary("Завершить поездку")
-            .Produces<RideResponse>(StatusCodes.Status200OK)
+            .Produces<RideResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
         return api;

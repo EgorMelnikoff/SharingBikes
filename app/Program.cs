@@ -19,12 +19,10 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("Postgres")
-    ?? throw new InvalidOperationException("Не найдена строка подключения ConnectionStrings:Postgres.");
+                       ?? throw new InvalidOperationException(
+                           "Не найдена строка подключения ConnectionStrings:Postgres.");
 
-builder.Services.AddDbContext<ShopDbContext>(options =>
-{
-    options.UseNpgsql(connectionString);
-});
+builder.Services.AddDbContext<SharingDbContext>(options => { options.UseNpgsql(connectionString); });
 
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -37,26 +35,17 @@ if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
     {
-        var db = scope.ServiceProvider.GetRequiredService<ShopDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<SharingDbContext>();
         await db.Database.EnsureCreatedAsync();
     }
-    
+
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Sharing Bikes API v1");
-        options.RoutePrefix = "swagger";
-    });
+    app.UseSwaggerUI(options => { options.RoutePrefix = "swagger"; });
 }
 
 var api = app.MapGroup("/api");
 api.MapRidesEndpoints();
 api.MapVehiclesEndpoints();
 api.MapUsersEndpoints();
-
-app.MapGet("/", () => Results.Ok(new
-{
-    message = "API работает."
-}));
 
 await app.RunAsync();

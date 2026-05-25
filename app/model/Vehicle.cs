@@ -2,7 +2,8 @@ using sharing_bikes.net.Enum;
 
 namespace sharing_bikes.net.model;
 
-public class Vehicle {
+public class Vehicle
+{
     public Guid Id { get; set; }
     public string Model { get; set; }
     public string Number { get; set; }

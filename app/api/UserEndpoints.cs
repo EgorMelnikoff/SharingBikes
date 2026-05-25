@@ -18,7 +18,7 @@ public static class UserEndpoints
             })
             .WithSummary("Получить список юзеров")
             .WithDescription("Возвращает всех зарегистрированных юзеров")
-            .Produces<IEnumerable<UserResponse>>(StatusCodes.Status200OK);
+            .Produces<IEnumerable<UserResponse>>();
 
         group.MapGet("/{userId:guid}",
                 async (Guid userId, IUserService users, IRideService rides, IMapper mapper) =>
@@ -29,11 +29,11 @@ public static class UserEndpoints
                     return Results.NotFound(new ErrorResponse { Message = "Юзер не найден." });
                 }
                 
-                var currentRide = await rides.GetRideById(userId);
+                var currentRide = await rides.GetRideByUserId(userId);
                 return Results.Ok(mapper.Map(user, currentRide));
             })
             .WithSummary("Получить юзера")
-            .Produces<UserResponse>(StatusCodes.Status200OK)
+            .Produces<UserResponse>()
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
         
         group.MapPost("/", async (CreateUserRequest body, IUserService users, IMapper mapper) =>

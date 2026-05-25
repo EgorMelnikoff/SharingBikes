@@ -6,7 +6,7 @@ using sharing_bikes.net.model;
 
 namespace sharing_bikes.net.services;
 
-public class VehicleService(ShopDbContext db) : IVehicleService
+public class VehicleService(SharingDbContext db) : IVehicleService
 {
     public async Task<IReadOnlyList<Vehicle>> GetAll()
         => await db.Vehicles
@@ -16,10 +16,9 @@ public class VehicleService(ShopDbContext db) : IVehicleService
 
     public async Task<Vehicle?> GetVehicleById(Guid id)
         => await db.Vehicles
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id);
 
-    public async Task<Vehicle?> CreateVehicle(CreateVehicleRequest request)
+    public async Task<Vehicle> CreateVehicle(CreateVehicleRequest request)
     {
         ValidateVehicleFields(request.Model, request.Number);
 
@@ -41,15 +40,11 @@ public class VehicleService(ShopDbContext db) : IVehicleService
     public async Task<Vehicle?> PatchVehicle(Guid id, PatchVehicleRequest request)
     {
         var entity = await db.Vehicles.FirstOrDefaultAsync(x => x.Id == id);
-        if (entity is null)
-        {
-            return null;
-        }
-
-        entity.Number = request.Number ?? entity.Number;
-        entity.Status = request.Status ?? entity.Status;
+       
+        entity?.Number = request.Number ?? entity.Number;
+        entity?.Status = request.Status ?? entity.Status;
         
-        ValidateNumber(entity.Number);
+        ValidateNumber(entity?.Number);
         
         await db.SaveChangesAsync();
         return entity;
@@ -67,15 +62,7 @@ public class VehicleService(ShopDbContext db) : IVehicleService
         await db.SaveChangesAsync();
         return true;
     }
-
-    private static void ValidateNumber(string? number)
-    {
-        if (number != null && number.Length != 6)
-        {
-            throw new ArgumentException("Номер должен состоять из 6 символов.");
-        }
-    }
-
+    
     private static void ValidateVehicleFields(string model, string number)
     {
         if (string.IsNullOrWhiteSpace(model))
@@ -84,5 +71,13 @@ public class VehicleService(ShopDbContext db) : IVehicleService
         }
 
         ValidateNumber(number);
+    }
+    
+    private static void ValidateNumber(string? number)
+    {
+        if (number is not null && number.Length != 6)
+        {
+            throw new ArgumentException("Номер должен состоять из 6 символов.");
+        }
     }
 }

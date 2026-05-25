@@ -6,7 +6,7 @@ using sharing_bikes.net.model;
 
 namespace sharing_bikes.net.services;
 
-public class UserService(ShopDbContext db) : IUserService
+public class UserService(SharingDbContext db) : IUserService
 {
     public async Task<IReadOnlyList<User>> GetAll()
         => await db.Users
@@ -16,21 +16,29 @@ public class UserService(ShopDbContext db) : IUserService
 
     public async Task<User?> GetUserById(Guid id)
         => await db.Users
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id);
 
     public async Task<User> CreateUser(CreateUserRequest request)
     {
         ValidateUserFields(request);
+        
+        var email = request.Email.Trim().ToLower();
+        var phone = request.Phone.Trim();
 
-        var id = Guid.NewGuid();
-        if (await db.Users.AnyAsync(x => x.Id == id))
+        var isEmailTaken = await db.Users.AnyAsync(x => x.Email.ToLower() == email);
+        if (isEmailTaken)
         {
-            throw new InvalidOperationException($"Юзер с идентификатором {id} уже существует.");
+            throw new InvalidOperationException($"Пользователь с email '{request.Email}' уже зарегистрирован.");
         }
 
+        var isPhoneTaken = await db.Users.AnyAsync(x => x.Phone == phone);
+        if (isPhoneTaken)
+        {
+            throw new InvalidOperationException($"Пользователь с телефоном '{request.Phone}' уже зарегистрирован.");
+        }
+        
         var entity = new User(
-            id, request.FullName.Trim(), request.Email.Trim(), request.Phone.Trim()
+            Guid.NewGuid(), request.FullName.Trim(), request.Email.Trim(), request.Phone.Trim()
         );
 
         db.Users.Add(entity);
@@ -52,22 +60,17 @@ public class UserService(ShopDbContext db) : IUserService
         return true;
     }
 
-
-    private static void ValidateUserFields(CreateUserRequest request)
+    
+    private void ValidateUserFields(CreateUserRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.FullName))
-        {
-            throw new ArgumentException("ФИО не должно быть пустым.");
-        }
+            throw new ArgumentException("Имя не может быть пустым.");
 
         if (string.IsNullOrWhiteSpace(request.Email))
-        {
-            throw new ArgumentException("Email не должен быть пустым.");
-        }
+            throw new ArgumentException("Email не может быть пустым.");
 
         if (string.IsNullOrWhiteSpace(request.Phone))
-        {
-            throw new ArgumentException("Телефон не должен быть пустым.");
-        }
+            throw new ArgumentException("Телефон не может быть пустым.");
     }
+
 }

@@ -12,13 +12,13 @@ public class Ride {
     
     public Decimal TotalCost { get; set; }
 
-    public Ride(Guid id, Guid userId, Guid vehicleId, DateTime startTime, DateTime? endTime)
+    public Ride(Guid id, Guid userId, Guid vehicleId)
     {
         Id = id;
         UserId = userId;
         VehicleId = vehicleId;
-        StartTime = startTime;
-        EndTime = endTime;
+        StartTime = DateTime.UtcNow;
+        EndTime = null;
         TotalCost = 0;
     }
 }

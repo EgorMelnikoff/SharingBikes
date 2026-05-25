@@ -8,8 +8,10 @@ using sharing_bikes.net.model;
 
 namespace sharing_bikes.net.services;
 
-public class RideService(ShopDbContext db, IVehicleService vehicleService) : IRideService
+public class RideService(SharingDbContext db, IVehicleService vehicleService) : IRideService
 {
+    private const decimal PricePerMinute = 9m;
+    
     public async Task<IReadOnlyList<Ride>> GetAll()
         => await db.Rides
             .AsNoTracking()
@@ -19,24 +21,17 @@ public class RideService(ShopDbContext db, IVehicleService vehicleService) : IRi
     public async Task<Ride?> GetRideById(Guid id)
     {
         Ride? ride = await db.Rides
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id);
 
-        if (ride is null)
-        {
-            return null;
-        }
-
-        ride.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
+        ride?.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
         return ride;
     }
-    
+
     public async Task<Ride?> GetRideByUserId(Guid userId)
     {
         Ride? ride = await db.Rides
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.UserId == userId && x.EndTime == null);
-        
+
         ride?.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
         return ride;
     }
@@ -44,12 +39,12 @@ public class RideService(ShopDbContext db, IVehicleService vehicleService) : IRi
     public async Task<StartRideResponse> StartRide(StartRideRequest request)
     {
         Ride? ride = await GetRideByUserId(request.UserId);
-        
+
         if (ride is not null)
         {
             throw new InvalidOperationException($"Невозможно начать новую поездку без завершения старой.");
         }
-        
+
         Vehicle? vehicle = await vehicleService.GetVehicleById(request.VehicleId);
 
         if (vehicle is null)
@@ -61,16 +56,16 @@ public class RideService(ShopDbContext db, IVehicleService vehicleService) : IRi
         {
             throw new InvalidOperationException($"Самокат недоступен.");
         }
-        
+
 
         var id = Guid.NewGuid();
         var entity = new Ride(
-            id, request.UserId, request.VehicleId, DateTime.Now, null
+            id, request.UserId, request.VehicleId
         );
 
         db.Rides.Add(entity);
 
-        vehicleService.PatchVehicle(
+        await vehicleService.PatchVehicle(
             request.VehicleId,
             new PatchVehicleRequest(null, VehicleStatus.Unavailable)
         );
@@ -88,33 +83,29 @@ public class RideService(ShopDbContext db, IVehicleService vehicleService) : IRi
         {
             throw new InvalidOperationException($"Поездки не существует.");
         }
-        
+
         Vehicle? vehicle = await vehicleService.GetVehicleById(ride.VehicleId);
 
         if (vehicle is null)
         {
             throw new InvalidOperationException($"Самоката не существует.");
         }
-        
+
         vehicle.Status = VehicleStatus.Available;
-        ride.EndTime = DateTime.Now;
-        ride.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
-        await db.SaveChangesAsync();
+        ride.EndTime = DateTime.UtcNow;
         
+        ride.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
+        
+        await db.SaveChangesAsync();
         return ride;
     }
 
     private decimal GetCurrentCost(DateTime start, DateTime? end)
     {
-        decimal pricePerMinute = 9m;
-
-        double minutes = end.HasValue
+        double minutes = Math.Abs(end.HasValue
             ? (end.Value - start).TotalMinutes
-            : (DateTime.Now - start).TotalMinutes;
+            : (DateTime.UtcNow - start).TotalMinutes);
 
-        if (minutes < 0)
-            minutes = 0;
-
-        return (decimal)minutes * pricePerMinute;
+        return (decimal)minutes * PricePerMinute;
     }
 }
