@@ -20,7 +20,6 @@ public class SharingDbContext(DbContextOptions<SharingDbContext> options) : DbCo
                 entity.Property(x => x.Phone).HasMaxLength(20);
             }
         );
-
         modelBuilder.Entity<Vehicle>(entity =>
             {
                 entity.HasKey(x => x.Id);
@@ -29,33 +28,27 @@ public class SharingDbContext(DbContextOptions<SharingDbContext> options) : DbCo
                 entity.Property(x => x.Status).IsRequired();
             }
         );
-
         modelBuilder.Entity<Ride>(entity =>
             {
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.TotalCost).HasPrecision(10, 2);
-
                 entity.HasOne<User>()
                     .WithMany()
                     .HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
-
                 entity.HasOne<Vehicle>()
                     .WithMany()
                     .HasForeignKey(x => x.VehicleId)
                     .OnDelete(DeleteBehavior.Restrict);
             }
         );
-        
         modelBuilder.Entity<Fine>(entity =>
             {
                 entity.HasKey(x => x.Id);
-                
                 entity.HasOne<User>()
                     .WithMany()
                     .HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
-
                 entity.HasOne<Ride>()
                     .WithMany()
                     .HasForeignKey(x => x.RideId)

@@ -1,5 +1,3 @@
-using sharing_bikes.net.Enum;
-
 namespace sharing_bikes.net.model;
 
 public class Ride {

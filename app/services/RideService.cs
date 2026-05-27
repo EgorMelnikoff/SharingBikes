@@ -9,14 +9,13 @@ using sharing_bikes.net.model;
 namespace sharing_bikes.net.services;
 
 public class RideService(
-    SharingDbContext db, 
+    SharingDbContext db,
     IVehicleService vehicleService,
     IFineService fineService
-    
-    ) : IRideService
+) : IRideService
 {
     private const decimal PricePerMinute = 9m;
-    
+
     public async Task<IReadOnlyList<Ride>> GetAll()
         => await db.Rides
             .AsNoTracking()
@@ -43,33 +42,23 @@ public class RideService(
 
     public async Task<StartRideResponse> StartRide(StartRideRequest request)
     {
-        Ride? ride = await GetRideByUserId(request.UserId);
+        var ride = await GetRideByUserId(request.UserId);
 
         if (ride is not null)
-        {
-            throw new InvalidOperationException($"Невозможно начать новую поездку без завершения старой.");
-        }
+        { throw new InvalidOperationException($"Невозможно начать новую поездку без завершения старой."); }
 
-        Vehicle? vehicle = await vehicleService.GetVehicleById(request.VehicleId);
-
+        var vehicle = await vehicleService.GetVehicleById(request.VehicleId);
         if (vehicle is null)
-        {
-            throw new InvalidOperationException($"Самоката не существует.");
-        }
+        { throw new InvalidOperationException($"Самоката не существует."); }
 
         if (vehicle.Status != VehicleStatus.Available)
-        {
-            throw new InvalidOperationException($"Самокат недоступен.");
-        }
+        { throw new InvalidOperationException($"Самокат недоступен."); }
 
-        IReadOnlyList<Fine> fines = await fineService.GetActiveFineByUserId(request.UserId);
+        var fines = await fineService.GetActiveFineByUserId(request.UserId);
 
         if (fines.Count != 0)
-        {
-            throw new InvalidOperationException($"Оплатите штрафы, чтобы начать аренду.");
-        }
-
-
+        { throw new InvalidOperationException($"Оплатите штрафы, чтобы начать аренду."); }
+        
         var id = Guid.NewGuid();
         var entity = new Ride(
             id, request.UserId, request.VehicleId
@@ -89,25 +78,19 @@ public class RideService(
 
     public async Task<Ride> EndRide(EndRideRequest request)
     {
-        Ride? ride = await GetRideById(request.RideId);
-
+        var ride = await GetRideById(request.RideId);
         if (ride is null)
-        {
-            throw new InvalidOperationException($"Поездки не существует.");
-        }
+        { throw new InvalidOperationException($"Поездки не существует."); }
 
-        Vehicle? vehicle = await vehicleService.GetVehicleById(ride.VehicleId);
-
+        var vehicle = await vehicleService.GetVehicleById(ride.VehicleId);
         if (vehicle is null)
-        {
-            throw new InvalidOperationException($"Самоката не существует.");
-        }
+        { throw new InvalidOperationException($"Самоката не существует."); }
 
         vehicle.Status = VehicleStatus.Available;
         ride.EndTime = DateTime.UtcNow;
-        
+
         ride.TotalCost = GetCurrentCost(ride.StartTime, ride.EndTime);
-        
+
         await db.SaveChangesAsync();
         return ride;
     }
@@ -124,7 +107,7 @@ public class RideService(
         await db.SaveChangesAsync();
         return true;
     }
-    
+
     private decimal GetCurrentCost(DateTime start, DateTime? end)
     {
         double minutes = Math.Abs(end.HasValue

@@ -10,6 +10,5 @@ public interface IRideService {
     Task<Ride?> GetRideByUserId(Guid userId);
     Task<StartRideResponse> StartRide(StartRideRequest request);
     Task<Ride> EndRide(EndRideRequest request);
-    
     Task<bool> DeleteRide(Guid id);
 }
